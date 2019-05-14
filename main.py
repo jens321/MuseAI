@@ -21,7 +21,9 @@ from music21 import *
 # * How to predict offsets between notes? Duration?
 # * Which parts do we want to pick? (Soprano, Alto, etc.)
 # * Which music to train on?
-# * incorporate multiple voices => just train on each one individually?!
+# * Incorporate multiple voices
+#     - We could train on each one individually and then just stack them
+#     - We could generate one, then generate the second one GIVEN the first one, etc.
 
 def get_music21_notes(songs, voice='soprano'):
   '''
@@ -153,6 +155,7 @@ def save_to_midi(predicted):
       offset += 0.5
 
   midi_stream = stream.Stream(output_notes)
+  midi_stream.show()
   midi_stream.write('midi', fp='test_output.mid')
 
 def get_similarity_score(predicted, test_music):
