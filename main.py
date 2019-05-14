@@ -153,7 +153,6 @@ def save_to_midi(predicted):
       offset += 0.5
 
   midi_stream = stream.Stream(output_notes)
-  midi_stream.show()
   midi_stream.write('midi', fp='test_output.mid')
 
 def get_similarity_score(predicted, test_music):
