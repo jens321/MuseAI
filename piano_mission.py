@@ -1,16 +1,16 @@
 from __future__ import print_function
 # ------------------------------------------------------------------------------------------------
 # Copyright (c) 2016 Microsoft Corporation
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 # associated documentation files (the "Software"), to deal in the Software without restriction,
 # including without limitation the rights to use, copy, modify, merge, publish, distribute,
 # sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all copies or
 # substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
 # NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
 # NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -46,15 +46,14 @@ def teleport(agent_host, teleport_x, teleport_z):
     teleport height of 57, which is ground level
     '''
 
-    print("trying a teleport")
+    print("\ntrying a teleport")
 
-    tp_command = "tp " + str(teleport_x)+ " 57 " + str(teleport_z)
+    tp_command = "tp " + str(teleport_x) + " 57 " + str(teleport_z)
     agent_host.sendCommand(tp_command)
     good_frame = False
     start = timer()
     while not good_frame:
         world_state = agent_host.getWorldState()
-        print(world_state.number_of_video_frames_since_last_state)
         if not world_state.is_mission_running:
             print("Mission ended prematurely - error.")
             exit(1)
@@ -80,11 +79,11 @@ def genString():
 
     result = '''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
             <Mission xmlns="http://ProjectMalmo.microsoft.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-            
+
               <About>
                 <Summary>Hello world!</Summary>
               </About>
-              
+
               <ServerSection>
                 <ServerInitialConditions>
                     <Time>
@@ -116,15 +115,15 @@ def genString():
                        x="-14"
                        y="56"
                        z="{z_loc}" />'''.format(cur_note=note, z_loc=num_notes-index)
-                
+
     result += '''</DrawingDecorator>
                  '''
-                 
+
     result += '''<ServerQuitFromTimeUp timeLimitMs="300000"/>
                   <ServerQuitWhenAnyAgentFinishes/>
                 </ServerHandlers>
               </ServerSection>
-              
+
               <AgentSection mode="Survival">
                 <Name>ThePianoMan</Name>
                 <AgentStart>
@@ -133,12 +132,11 @@ def genString():
                 <AgentHandlers>
                   <ObservationFromFullStats/>
                   <ContinuousMovementCommands turnSpeedDegs="180"/>
+                  <AbsoluteMovementCommands/>
                 </AgentHandlers>
               </AgentSection>
             </Mission>'''.format(agent_loc=num_notes/2)
     return result
-
-
 
 
 if sys.version_info[0] == 2:
@@ -166,6 +164,7 @@ if agent_host.receivedArgument("help"):
 
 my_mission = MalmoPython.MissionSpec(missionXML, True)
 my_mission_record = MalmoPython.MissionRecordSpec()
+my_mission_video = my_mission.requestVideo(800,500)
 
 # Attempt to start a mission:
 max_retries = 3
@@ -199,7 +198,7 @@ print("Mission running ", end=' ')
 while world_state.is_mission_running:
     print(".", end="")
     time.sleep(0.1)
-    teleport(agent_host, -14, 0)
+    teleport(agent_host, -13, 1)
     world_state = agent_host.getWorldState()
     for error in world_state.errors:
         print("Error:",error.text)
@@ -207,6 +206,3 @@ while world_state.is_mission_running:
 print()
 print("Mission ended")
 # Mission has ended.
-
-
- 
