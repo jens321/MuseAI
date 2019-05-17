@@ -1,5 +1,6 @@
 from sklearn.ensemble import RandomForestClassifier
 from music21 import * 
+from music_generator import MusicGenerator
 # Data preprocessing was heavily inspired by: 
 # https://github.com/Skuldur/Classical-Piano-Composer/blob/master/lstm.py
 
@@ -188,20 +189,24 @@ def main():
   # song = corpus.parse('bach/bwv437')
   # song.show()
 
-  music21_notes = get_music21_notes(training_music)
-  parsed_notes = get_parsed_notes(music21_notes)
+  # music21_notes = get_music21_notes(training_music)
+  # parsed_notes = get_parsed_notes(music21_notes)
 
-  vocab = set(note for group in parsed_notes for note in group)
+  # vocab = set(note for group in parsed_notes for note in group)
 
-  note_to_idx = {note: idx for idx, note in enumerate(vocab)}
-  idx_to_note = {idx: note for note, idx in note_to_idx.items()}
+  # note_to_idx = {note: idx for idx, note in enumerate(vocab)}
+  # idx_to_note = {idx: note for note, idx in note_to_idx.items()}
 
-  X, Y = make_dataset(parsed_notes, note_to_idx)
+  # X, Y = make_dataset(parsed_notes, note_to_idx)
   
-  clf = train_rf(X, Y)
+  # clf = train_rf(X, Y)
 
-  predicted = get_predictions(test_music, clf, note_to_idx, idx_to_note)
+  # predicted = get_predictions(test_music, clf, note_to_idx, idx_to_note)
+  # print(predicted)
 
+  music_gen = MusicGenerator(training_music, test_music)
+  predicted = music_gen.generate_music()
+  print(predicted)
   save_to_midi(predicted)
 
   score = get_similarity_score(predicted, test_music)
