@@ -28,7 +28,38 @@ import sys
 import time
 import math
 from timeit import default_timer as timer
+from sklearn.ensemble import RandomForestClassifier
+from music21 import * 
 
+from music_generator import MusicGenerator
+
+NOTE_TO_POS_MAP = {
+    'F#3': 0.5,
+    'G3': 1.5,
+    'G#3': 2.5,
+    'A3': 3.5,
+    'A#3': 4.5,
+    'B3': 5.5,
+    'C4': 6.5,
+    'C#4': 7.5,
+    'D4': 8.5,
+    'D#4': 9.5,
+    'E4': 10.5,
+    'E#4': 11.5, # same as F4!!
+    'F4': 11.5,
+    'F#4': 12.5,
+    'G4': 13.5,
+    'G#4': 14.5,
+    'A4': 15.5,
+    'B4': 16.5,
+    'C5': 17.5,
+    'C#5': 18.5,
+    'D5': 19.5,
+    'D#5': 20.5,
+    'E5': 21.5,
+    'F5': 22.5,
+    'F#5': 23.5
+}
 
 def teleport(agent_host, teleport_x, teleport_z):
     '''
@@ -204,11 +235,28 @@ print("Mission running ", end=' ')
 
 # Loop until mission ends:
 # teleporting to all of the notes, test run, to be changed
+training_music = ['bach/bwv66.6',
+                    'bach/bwv1.6',
+                    'bwv438',
+                    'bwv44.7',
+                    'bwv436',
+                    'bwv89.6',
+                    'bwv84.5',
+                    'bwv83.5']
+# Should probably just stay one?
+test_music = ['bach/bwv437']
+music_gen = MusicGenerator(training_music, test_music)
+predicted = music_gen.generate_music()
+print(predicted)
 i=0.5
+note_idx = 0
 while world_state.is_mission_running:
     print(".", end="")
-    time.sleep(0.5)
-    teleport(agent_host, 14, i)
+    time.sleep(0.3)
+    while (predicted[note_idx] not in NOTE_TO_POS_MAP):
+        note_idx = (note_idx + 1) % len(predicted)
+    teleport(agent_host, 14, NOTE_TO_POS_MAP[predicted[note_idx]])
+    note_idx = (note_idx + 1) % len(predicted)
     world_state = agent_host.getWorldState()
     for error in world_state.errors:
         print("Error:",error.text)
