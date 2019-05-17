@@ -85,6 +85,10 @@ def genString():
                 <Summary>Hello world!</Summary>
               </About>
               
+              <ModSettings>
+                <MsPerTick>100</MsPerTick>
+              </ModSettings>
+
               <ServerSection>
                 <ServerInitialConditions>
                     <Time>
