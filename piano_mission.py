@@ -50,8 +50,8 @@ def teleport(agent_host, teleport_x, teleport_z):
             'G4','G_sharp_4','A4','A_sharp_4','B4','C5','C_sharp_5','D5','D_sharp_5','E5','F5','F_sharp_5']
 
     To teleport to a note at index i, call 
-        teleport(agent_host, -13, i)
-    where i is the index of the note + 1.5
+        teleport(agent_host, 14, i)
+    where i is the index of the note + 0.5
     '''
 
     print("\ntrying a teleport")
@@ -115,14 +115,14 @@ def genString():
         result += '''<DrawBlock
                        type="noteblock"
                        variant="{cur_note}"
-                       x="-15"
+                       x="15"
                        y="56"
                        z="{z_loc}" />
                      <DrawBlock
                        type="wooden_pressure_plate"
-                       x="-14"
+                       x="14"
                        y="56"
-                       z="{z_loc}" />'''.format(cur_note=note, z_loc=num_notes-index)
+                       z="{z_loc}" />'''.format(cur_note=note, z_loc=index)
 
     result += '''</DrawingDecorator>
                  '''
@@ -135,7 +135,7 @@ def genString():
               <AgentSection mode="Survival">
                 <Name>ThePianoMan</Name>
                 <AgentStart>
-                    <Placement x="0" y="56.0" z="{agent_loc}" yaw="90"/>
+                    <Placement x="0" y="56.0" z="{agent_loc}" yaw="270"/>
                 </AgentStart>
                 <AgentHandlers>
                   <ObservationFromFullStats/>
@@ -204,11 +204,11 @@ print("Mission running ", end=' ')
 
 # Loop until mission ends:
 # teleporting to all of the notes, test run, to be changed
-i=1.5
+i=0.5
 while world_state.is_mission_running:
     print(".", end="")
     time.sleep(0.5)
-    teleport(agent_host, -13, i)
+    teleport(agent_host, 14, i)
     world_state = agent_host.getWorldState()
     for error in world_state.errors:
         print("Error:",error.text)
