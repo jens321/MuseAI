@@ -1,3 +1,10 @@
 .vscode
 *.mid
 __pycache__/
+*
+!music_generator.py
+!running_ai.py
+!piano_mission.py
+!Instrument.py
+!README.md
+!data_analysis.py
