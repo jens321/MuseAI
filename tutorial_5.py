@@ -165,7 +165,6 @@ time.sleep(1)                        #Wait a second until we are looking in roug
 agent_host.sendCommand("pitch 0")    #Stop tilting the camera
 agent_host.sendCommand("move 1")     #And start running...
 agent_host.sendCommand("attack 1")   #Whilst flailing our pickaxe!
-
 # Loop until mission ends:
 while world_state.is_mission_running:
     print(".", end="")
@@ -178,11 +177,10 @@ while world_state.is_mission_running:
         observations = json.loads(msg)                          # and parse the JSON
         grid = observations.get(u'floor3x3', 0)                 # and get the grid we asked for
         # ADD SOME CODE HERE TO SAVE YOUR AGENT
-        if(grid[3] == 'lava'):
-            agent_host.sendCommand("jump 1")
-            time.sleep(0.1)
-            agent_host.sendCommand("jump 0")
-        
+        if (grid[3] == 'lava'):
+          agent_host.sendCommand('jump 1')
+          time.sleep(0.1)
+          agent_host.sendCommand('jump 0')
 print()
 print("Mission ended")
 # Mission has ended.

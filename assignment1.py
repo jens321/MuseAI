@@ -29,7 +29,6 @@ import sys
 import time
 import json
 from priority_dict import priorityDictionary as PQ
-from math import inf
 
 # sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
 
@@ -130,14 +129,15 @@ def find_start_end(grid):
     #
     #   Fill and submit this code
     #
-    start = None
-    end = None
-    for index, block in enumerate(grid):
-        if block == 'emerald_block':
-            start = index
-        if block == 'redstone_block':
-            end = index
-    return (start, end)
+    start_index = None
+    end_index = None
+    for i in range(len(grid)):
+        if (grid[i] == 'emerald_block'):
+            start_index = i
+        elif (grid[i] == 'redstone_block'):
+            end_index = i
+
+    return (start_index, end_index)
     #-------------------------------------
 
 def extract_action_list_from_path(path_list):
@@ -159,6 +159,25 @@ def extract_action_list_from_path(path_list):
     return alist
 
 
+def get_adj(node, grid):
+    adj = []
+    if (node - 1 >= 0 and grid[node - 1] != 'air'):
+        adj.append(node - 1)
+    if (node + 1 <= len(grid) and grid[node + 1] != 'air'):
+        adj.append(node + 1)
+    if (node - 21 >= 0 and grid[node - 21] != 'air'):
+        adj.append(node - 21)
+    if (node + 21 >= 0 and grid[node + 21] != 'air'):
+        adj.append(node + 21)
+    return adj
+
+def get_path(parents, source, end):
+    path = [end]
+    index = end
+    while parents[index] != index:
+        path.append(parents[index])
+        index = parents[index]
+    return path[::-1]
 
 def dijkstra_shortest_path(grid_obs, source, dest):
     """
@@ -173,58 +192,38 @@ def dijkstra_shortest_path(grid_obs, source, dest):
     Returns
         path_list:  <list>  block indexes representing a path from source (first element) to destination (last)
     """
-
-    def direction_gen(index):
-        if(index - 1 >= 0):
-            yield index-1
-        if(index - 21 >= 0):
-            yield index-21
-        if(index + 1 < len(grid_obs)):
-            yield index+1
-        if(index + 21 < len(grid_obs)):
-            yield index+21
-
     #------------------------------------
     #
     #   Fill and submit this code
     #
-    visited = set()
-    queue = PQ()
+
+    # initialize all nodes to infinity
+    dist = [float("inf") for i in range(len(grid_obs))]
     parents = [i for i in range(len(grid_obs))]
 
-    #initial setup of the priority queue
-    for i in range(len(grid_obs)):
-        if(i == source):
-            queue[i] = 0
-        else:
-            queue[i] = inf
+    # distance to itself is zero
+    dist[source] = 0
 
-    #current popped shortest index
-    shortest_found = None
-    while shortest_found != dest:
-        shortest_found = queue.smallest()
-        visited.add(shortest_found)
-        smallest_distance = queue[shortest_found]
-        del queue[shortest_found]
+    # initialize priority queue
+    pq = PQ()
+    pq[source] = 0
+    while True:
+        node = pq.smallest()
+        del pq[node]
+        adj_list = get_adj(node, grid_obs)
+        if (node == dest):
+            break
 
-        #trying all 4 directions for new blocks
-        for block_index in direction_gen(shortest_found):
-            if(block_index not in visited and grid_obs[block_index] != 'air'):
-                current_distance = queue[block_index]
-                if(smallest_distance+1 < current_distance):
-                    parents[block_index] = shortest_found
-                    queue[block_index] = smallest_distance+1
+        # loop through all valid adjacent positions
+        for adj in adj_list:
 
-    result = []
-    to_be_added = shortest_found
-    while(to_be_added != start):
-        result.append(to_be_added)
-        to_be_added = parents[to_be_added]
-    result.append(start)
-    result.reverse()
-   
-    return result
+            # relax if we find shorter path
+            if dist[node] + 1 < dist[adj]:
+                parents[adj] = node 
+                dist[adj] = dist[node] + 1
+                pq[adj]= dist[adj]
 
+    return get_path(parents, source, dest)
     #-------------------------------------
 
 # Create default Malmo objects:

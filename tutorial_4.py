@@ -97,9 +97,9 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                   <ObservationFromFullStats/>
                   <ContinuousMovementCommands turnSpeedDegs="180"/>
                   <InventoryCommands/>
-                  <AgentQuitFromReachingPosition>
-                    <Marker x="-26.5" y="40" z="0.5" tolerance="0.5" description="Goal_found"/>
-                  </AgentQuitFromReachingPosition>
+                  <AgentQuitFromTouchingBlockType>
+           <Block type="diamond_block" />
+       </AgentQuitFromTouchingBlockType>
                 </AgentHandlers>
               </AgentSection>
             </Mission>'''
@@ -148,16 +148,12 @@ print("Mission running ", end=' ')
 
 # ADD YOUR CODE HERE
 # TO GET YOUR AGENT TO THE DIAMOND BLOCK
-
-agent_host.sendCommand("pitch 1")
+agent_host.sendCommand('hotbar.9 1')
+agent_host.sendCommand('move 1')
+agent_host.sendCommand('attack 1')
+agent_host.sendCommand('pitch 1')
 time.sleep(0.3)
-agent_host.sendCommand("pitch 0")
-agent_host.sendCommand("hotbar.9 1")
-agent_host.sendCommand("hotbar.9 0")
-agent_host.sendCommand("attack 1")
-agent_host.sendCommand("move 1")
-#agent_host.sendCommand("move 1")
-
+agent_host.sendCommand('pitch 0')
 # Loop until mission ends:
 while world_state.is_mission_running:
     print(".", end="")

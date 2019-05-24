@@ -85,6 +85,9 @@ missionXML='''<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
                 <Name>MalmoTutorialBot</Name>
                 <AgentStart>
                     <Placement x="0.5" y="56.0" z="0.5" yaw="90"/>
+                    <Inventory>
+                    <InventoryItem slot="0" type="diamond_pickaxe"/>
+                  </Inventory>
                 </AgentStart>
                 <AgentHandlers>
                   <ObservationFromFullStats/>

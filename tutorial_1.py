@@ -74,13 +74,10 @@ while not world_state.has_mission_begun:
 print()
 print("Mission running ", end=' ')
 
-print(my_mission.getAsXML(True))
-
+# Loop until mission ends:
 agent_host.sendCommand("pitch 1")
 time.sleep(1)
 agent_host.sendCommand("attack 1")
-
-# Loop until mission ends:
 while world_state.is_mission_running:
     print(".", end="")
     time.sleep(0.1)
