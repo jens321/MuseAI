@@ -1,5 +1,7 @@
 from sklearn.ensemble import RandomForestClassifier
 from music21 import * 
+import statistics as stats 
+import random
 from music_generator import MusicGenerator
 # Data preprocessing was heavily inspired by: 
 # https://github.com/Skuldur/Classical-Piano-Composer/blob/master/lstm.py
@@ -123,7 +125,7 @@ def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
 
   return list(map(lambda t: idx_to_note[t], predicted))
 
-def save_to_midi(predicted): 
+def play_music(predicted): 
   '''
   Convert the predicted output into a midi file
   Literal copy of https://github.com/Skuldur/Classical-Piano-Composer/blob/master/lstm.py
@@ -156,61 +158,110 @@ def save_to_midi(predicted):
       offset += 0.5
 
   midi_stream = stream.Stream(output_notes)
-  try: 
-    midi_stream.show()
-  except: 
-    pass 
-  midi_stream.write('midi', fp='test_output.mid')
+  midi_stream.show()
 
-def get_similarity_score(predicted, test_music):
+def get_music_data():
   '''
-  Counts how many notes from the predicted set are
-  similar to the test music and returns as percentage.
+  Load the Bach corpus and split the data into training and test. 
   '''
-  test_song = get_parsed_notes(get_music21_notes(['bach/bwv437']))[0]
-  diff = 0
-  for note1, note2 in zip(predicted, test_song):
-    if note1 == note2:
-      diff += 1
-  return diff/len(test_song)
+  bach_songs = corpus.getComposer('bach')
+  song_list = []
+  trained_songs = 1
+  idx = 0
+  while trained_songs < 200:
+    song = 'bach/' + '.'.join(str(bach_songs[idx]).split('/')[-1].split('.')[:-1])
+    # Check if Soprano voice exits
+    parsed_song = corpus.parse(song)
+    
+    # Hack to test if the song has a soprano voice
+    try:
+      part = parsed_song.parts.stream()['soprano']
+      song_list.append(song)
+      trained_songs += 1
+    except:
+      pass
+    idx += 1
+
+  # Randomize the songs before making training and test split 
+  random.shuffle(song_list)
+  return (song_list[:160], song_list[160:])
+
+def get_accuracy(music, clf, note_to_idx, idx_to_note):
+  '''
+  Calculate training/testing accuracy based on "right or wrong" evaluation
+  criterion. 
+
+  Returns
+  -------
+  Mean of training/testing accuracy for each song in the training set
+  '''
+  accuracies = []
+  for song in music: 
+    # Get original
+    original = get_parsed_notes(get_music21_notes([song]))[0]
+    # Get predicted 
+    predicted = get_predictions([song], clf, note_to_idx, idx_to_note)
+    count = 0
+    for note1, note2 in zip(predicted[10:], original[10:]):
+      if note1 == note2:
+        count += 1
+    accuracies.append(count/len(original[10:]))
+
+  return stats.mean(accuracies)
 
 def main(): 
-  training_music = ['bach/bwv66.6',
-                    'bach/bwv1.6',
-                    'bwv438',
-                    'bwv44.7',
-                    'bwv436',
-                    'bwv89.6',
-                    'bwv84.5',
-                    'bwv83.5']
-  # Should probably just stay one?
-  test_music = ['bach/bwv437']
+  # Get training and test set
+  training_music, test_music = get_music_data()
 
-  # song = corpus.parse('bach/bwv437')
-  # song.show()
+  # Parse training music into notes
+  music21_notes_train = get_music21_notes(training_music)
+  parsed_notes_train = get_parsed_notes(music21_notes_train)
 
-  # music21_notes = get_music21_notes(training_music)
-  # parsed_notes = get_parsed_notes(music21_notes)
+  # Parse test music into notes 
+  music21_notes_test = get_music21_notes(test_music)
+  parsed_notes_test = get_parsed_notes(music21_notes_test)
 
-  # vocab = set(note for group in parsed_notes for note in group)
+  # Create the vocabulary
+  # NOTE: To avoid missing key errors, we add all notes from the 
+  #       testing set also in the vocab. 
+  vocab = set(note for group in parsed_notes_train for note in group)
+  for group in parsed_notes_test:
+    for note in group:
+      vocab.add(note)
 
-  # note_to_idx = {note: idx for idx, note in enumerate(vocab)}
-  # idx_to_note = {idx: note for note, idx in note_to_idx.items()}
+  # Create note to int and int to note mappings
+  note_to_idx = {note: idx for idx, note in enumerate(vocab)}
+  idx_to_note = {idx: note for note, idx in note_to_idx.items()}
 
-  # X, Y = make_dataset(parsed_notes, note_to_idx)
+  # Create the dataset with notes X and labels Y
+  X, Y = make_dataset(parsed_notes_train, note_to_idx)
   
-  # clf = train_rf(X, Y)
+  # Traing the classifier
+  clf = train_rf(X, Y)
 
-  # predicted = get_predictions(test_music, clf, note_to_idx, idx_to_note)
-  # print(predicted)
+  # Get the training accuracy 
+  print("Training Accuracy")
+  print("-----------------")
+  training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
+  print(training_accuracy)
 
-  music_gen = MusicGenerator(training_music, test_music)
-  predicted = music_gen.generate_music()
-  print(predicted)
-  save_to_midi(predicted)
+  print()
 
-  score = get_similarity_score(predicted, test_music)
-  print('similarity score:', score)
+  # Get the test accuracy 
+  print("Test Accuracy")
+  print("-----------------")
+  test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
+  print(test_accuracy)
+
+  # Pick a random song from the test set which we
+  # want to listen to
+  show_song = test_music[random.randint(0, len(test_music))]
+
+  # Predicted on the randomly picked song
+  predicted = get_predictions([show_song], clf, note_to_idx, idx_to_note)
+
+  # Open the song in MuseScore
+  play_music(predicted)
     
 if __name__ == "__main__":
   main()
