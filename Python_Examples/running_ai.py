@@ -178,85 +178,94 @@ def genString(predicted):
     return result
 
 
-if sys.version_info[0] == 2:
-    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
-else:
-    import functools
-    print = functools.partial(print, flush=True)
+
 
 
 # Create default Malmo objects:
 
-agent_host = MalmoPython.AgentHost()
-try:
-    agent_host.parse( sys.argv )
-except RuntimeError as e:
-    print('ERROR:',e)
-    print(agent_host.getUsage())
-    exit(1)
-if agent_host.receivedArgument("help"):
-    print(agent_host.getUsage())
-    exit(0)
-
-
-## Training on the data to generate notes
-# Loop until mission ends:
-# teleporting to all of the notes, test run, to be changed
-training_music = ['bach/bwv66.6',
-                    'bach/bwv1.6',
-                    'bwv438',
-                    'bwv44.7',
-                    'bwv436',
-                    'bwv89.6',
-                    'bwv84.5',
-                    'bwv83.5']
-# Should probably just stay one?
-test_music = ['bach/bwv437']
-music_gen = MusicGenerator(training_music, test_music)
-predicted = music_gen.generate_music()
-print(predicted)
-
-missionXML=genString(predicted)
-
-my_mission = MalmoPython.MissionSpec(missionXML, True)
-my_mission_record = MalmoPython.MissionRecordSpec()
-my_mission_video = my_mission.requestVideo(800,500)
-
-# Attempt to start a mission:
-max_retries = 3
-for retry in range(max_retries):
+def main():
+    agent_host = MalmoPython.AgentHost()
     try:
-        agent_host.startMission( my_mission, my_mission_record )
-        break
+        agent_host.parse( sys.argv )
     except RuntimeError as e:
-        if retry == max_retries - 1:
-            print("Error starting mission:",e)
-            exit(1)
-        else:
-            time.sleep(2)
+        print('ERROR:',e)
+        print(agent_host.getUsage())
+        exit(1)
+    if agent_host.receivedArgument("help"):
+        print(agent_host.getUsage())
+        exit(0)
 
-# Loop until mission starts:
-print("Waiting for the mission to start ", end=' ')
-world_state = agent_host.getWorldState()
-while not world_state.has_mission_begun:
-    print(".", end="")
-    time.sleep(0.11)
+    
+    ## Training on the data to generate notes
+    # Loop until mission ends:
+    # teleporting to all of the notes, test run, to be changed
+    training_music = ['bach/bwv66.6',
+                        'bach/bwv1.6',
+                        'bwv438',
+                        'bwv44.7',
+                        'bwv436',
+                        'bwv89.6',
+                        'bwv84.5',
+                        'bwv83.5']
+    # Should probably just stay one?
+    test_music = ['bach/bwv437']
+
+
+    music_gen = MusicGenerator(training_music, test_music)
+    predicted = music_gen.generate_music()
+    print(predicted)
+
+    missionXML=genString(predicted)
+
+    my_mission = MalmoPython.MissionSpec(missionXML, True)
+    my_mission_record = MalmoPython.MissionRecordSpec()
+    my_mission_video = my_mission.requestVideo(800,500)
+
+    # Attempt to start a mission:
+    max_retries = 3
+    for retry in range(max_retries):
+        try:
+            agent_host.startMission( my_mission, my_mission_record )
+            break
+        except RuntimeError as e:
+            if retry == max_retries - 1:
+                print("Error starting mission:",e)
+                exit(1)
+            else:
+                time.sleep(2)
+
+    # Loop until mission starts:
+    print("Waiting for the mission to start ", end=' ')
     world_state = agent_host.getWorldState()
-    for error in world_state.errors:
-        print("Error:",error.text)
+    while not world_state.has_mission_begun:
+        print(".", end="")
+        time.sleep(0.11)
+        world_state = agent_host.getWorldState()
+        for error in world_state.errors:
+            print("Error:",error.text)
 
-print()
-print("Mission running ", end=' ')
+    print()
+    print("Mission running ", end=' ')
 
-agent_host.sendCommand("move 1")
+    agent_host.sendCommand("move 1")
 
-while world_state.is_mission_running:
-    print(".", end="")
-    time.sleep(1)
-    world_state = agent_host.getWorldState()
-    for error in world_state.errors:
-        print("Error:",error.text)
+    while world_state.is_mission_running:
+        print(".", end="")
+        time.sleep(1)
+        world_state = agent_host.getWorldState()
+        for error in world_state.errors:
+            print("Error:",error.text)
 
-print()
-print("Mission ended")
-# Mission has ended.
+    print()
+    print("Mission ended")
+    # Mission has ended.
+
+
+if __name__ == '__main__':
+    if sys.version_info[0] == 2:
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)  # flush print output immediately
+    else:
+        import functools
+        print = functools.partial(print, flush=True)
+
+    main()
