@@ -1,2 +1,3 @@
 .vscode
 *.mid
+__pychache__/
