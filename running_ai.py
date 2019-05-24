@@ -133,6 +133,7 @@ def genString(predicted):
 
     result += '''<DrawingDecorator>
                      '''
+    index = 0
     for index, note in enumerate(predicted):
         result += '''<DrawBlock
                        type="noteblock"
@@ -144,9 +145,17 @@ def genString(predicted):
                        type="wooden_pressure_plate"
                        x="14"
                        y="56"
-                       z="{z_loc}" />'''.format(cur_note= "F4" if note=="E#4" else note.replace("#", "_sharp_"),
+                       z="{z_loc}" />
+                     '''.format(cur_note= "F4" if note=="E#4" else note.replace("#", "_sharp_"),
                                                 z_loc=index)
-
+   
+    #adding redstone block at the end to make the agent stop
+    result += '''<DrawBlock
+                   type="redstone_block"
+                   x="14"
+                   y="55"
+                   z="{}" />
+                   '''.format(index+1) 
     result += '''</DrawingDecorator>
                  '''
 
@@ -160,6 +169,9 @@ def genString(predicted):
                     <Placement x="14.5" y="56.0" z="{agent_loc}" yaw="0"/>
                 </AgentStart>
                 <AgentHandlers>
+                  <AgentQuitFromTouchingBlockType>
+                      <Block type="redstone_block"/>
+                  </AgentQuitFromTouchingBlockType>
                   <ObservationFromFullStats/>
                   <ContinuousMovementCommands turnSpeedDegs="180"/>
                   <AbsoluteMovementCommands/>
