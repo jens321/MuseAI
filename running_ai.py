@@ -31,7 +31,7 @@ from timeit import default_timer as timer
 from sklearn.ensemble import RandomForestClassifier
 from music21 import * 
 
-from music_generator import MusicGenerator
+from music_generator import MusicGenerator, get_music_data
 
 NOTE_TO_POS_MAP = {
     'F#3': 0.5,
@@ -202,17 +202,7 @@ def main():
     ## Training on the data to generate notes
     # Loop until mission ends:
     # teleporting to all of the notes, test run, to be changed
-    training_music = ['bach/bwv66.6',
-                        'bach/bwv1.6',
-                        'bwv438',
-                        'bwv44.7',
-                        'bwv436',
-                        'bwv89.6',
-                        'bwv84.5',
-                        'bwv83.5']
-    # Should probably just stay one?
-    test_music = ['bach/bwv437']
-
+    training_music, test_music = get_music_data()
 
     music_gen = MusicGenerator(training_music, test_music)
     predicted = music_gen.generate_music()
