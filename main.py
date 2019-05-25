@@ -1,23 +1,23 @@
 from sklearn.ensemble import RandomForestClassifier
-from music21 import * 
-import statistics as stats 
+from music21 import *
+import statistics as stats
 import random
 from music_generator import MusicGenerator
-# Data preprocessing was heavily inspired by: 
+# Data preprocessing was heavily inspired by:
 # https://github.com/Skuldur/Classical-Piano-Composer/blob/master/lstm.py
 
 # Random Forrest has to be fitted with two arrays:
 # X: [n_samples, n_features]
 # Y: [n_samples]
 
-# We'll be representing the notes by integers 
-# A -> 0, B -> 1, etc. 
+# We'll be representing the notes by integers
+# A -> 0, B -> 1, etc.
 # To do this, we'll need a "vocabulary" of all the notes
-# and chords that show up in the training set 
+# and chords that show up in the training set
 
 # NOTE: We'll have to somehow be able to deal with
 # notes/chords we have never seen (might appear in
-# the test set) => how?? 
+# the test set) => how??
 
 # TODO
 # ----
@@ -32,17 +32,17 @@ def get_music21_notes(songs, voice='soprano'):
   '''
   Takes in a list of songs (e.g. "Bach") and parses each one.
   Currently, we take the first 'part' of the song and return
-  all its notes and chords. 
+  all its notes and chords.
 
   Returns
   -------
-  notes_to_parse: list of Music21 Notes and Chords 
+  notes_to_parse: list of Music21 Notes and Chords
   '''
   notes_to_parse = []
-  for song in songs: 
+  for song in songs:
     parsed_song = corpus.parse(song)
-    # We probably want to make this more flexible so 
-    # it can take in the part we want? 
+    # We probably want to make this more flexible so
+    # it can take in the part we want?
     part = parsed_song.parts.stream()[voice]
     notes_to_parse.append([note for note in part.flat.notes])
 
@@ -54,12 +54,12 @@ def get_parsed_notes(music21_notes):
   classes as a 2D list (collection of notes for each song
   in the training data).
 
-  Returns 
+  Returns
   -------
   notes: list of Note and Chord representations that are hashable
   '''
   notes = []
-  for note_group in music21_notes: 
+  for note_group in music21_notes:
     notes.append([])
     for sound in note_group:
       if isinstance(sound, note.Note):
@@ -67,15 +67,15 @@ def get_parsed_notes(music21_notes):
       elif isinstance(sound, chord.Chord):
         notes[-1].append('.'.join(str(n) for n in sound.normalOrder))
 
-  # [Jens]: I don't think we need normalization here, since all 
-  # of our features are already on the same scale. 
+  # [Jens]: I don't think we need normalization here, since all
+  # of our features are already on the same scale.
 
-  return notes 
+  return notes
 
 def make_dataset(parsed_notes, note_to_idx, sequence_length=10):
   '''
   Takes in the parsed notes, which is a 2D list of notes
-  for all the songs in the training data. 
+  for all the songs in the training data.
 
   Returns
   -------
@@ -84,7 +84,7 @@ def make_dataset(parsed_notes, note_to_idx, sequence_length=10):
   '''
   X = []
   Y = []
-  for song in parsed_notes: 
+  for song in parsed_notes:
     int_notes = list(map(lambda t: note_to_idx[t], song))
     for i in range(len(int_notes) - sequence_length):
       X.append(int_notes[i:i + sequence_length])
@@ -94,16 +94,16 @@ def make_dataset(parsed_notes, note_to_idx, sequence_length=10):
 
 def train_rf(X, Y, estimators=100):
   '''
-  Train a Random Forest classifier on the dataset 
+  Train a Random Forest classifier on the dataset
 
   Returns
   -------
-  clf: the trained Random Forest classifier 
+  clf: the trained Random Forest classifier
   '''
   clf = RandomForestClassifier(n_estimators=estimators)
   clf.fit(X, Y)
 
-  return clf 
+  return clf
 
 def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
   '''
@@ -125,7 +125,7 @@ def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
 
   return list(map(lambda t: idx_to_note[t], predicted))
 
-def play_music(predicted): 
+def play_music(predicted):
   '''
   Convert the predicted output into a midi file
   Literal copy of https://github.com/Skuldur/Classical-Piano-Composer/blob/master/lstm.py
@@ -160,19 +160,21 @@ def play_music(predicted):
   midi_stream = stream.Stream(output_notes)
   midi_stream.show()
 
-def get_music_data():
+def get_music_data(datasetNum):
   '''
-  Load the Bach corpus and split the data into training and test. 
+  Load the Bach corpus and split the data into training and test.
   '''
   bach_songs = corpus.getComposer('bach')
   song_list = []
   trained_songs = 1
   idx = 0
-  while trained_songs < 200:
+  while trained_songs < datasetNum:
+    # uncomment below if windows and comment the line below with the forward slashes 
+    #song = 'bach\\' + '.'.join(str(bach_songs[idx]).split('\\')[-1].split('.')[:-1])
     song = 'bach/' + '.'.join(str(bach_songs[idx]).split('/')[-1].split('.')[:-1])
     # Check if Soprano voice exits
     parsed_song = corpus.parse(song)
-    
+
     # Hack to test if the song has a soprano voice
     try:
       part = parsed_song.parts.stream()['soprano']
@@ -182,24 +184,26 @@ def get_music_data():
       pass
     idx += 1
 
-  # Randomize the songs before making training and test split 
+  # Randomize the songs before making training and test split
   random.shuffle(song_list)
-  return (song_list[:160], song_list[160:])
+
+  index_split = int(datasetNum * .8)
+  return (song_list[:index_split], song_list[index_split:])
 
 def get_accuracy(music, clf, note_to_idx, idx_to_note):
   '''
   Calculate training/testing accuracy based on "right or wrong" evaluation
-  criterion. 
+  criterion.
 
   Returns
   -------
   Mean of training/testing accuracy for each song in the training set
   '''
   accuracies = []
-  for song in music: 
+  for song in music:
     # Get original
     original = get_parsed_notes(get_music21_notes([song]))[0]
-    # Get predicted 
+    # Get predicted
     predicted = get_predictions([song], clf, note_to_idx, idx_to_note)
     count = 0
     for note1, note2 in zip(predicted[10:], original[10:]):
@@ -209,21 +213,21 @@ def get_accuracy(music, clf, note_to_idx, idx_to_note):
 
   return stats.mean(accuracies)
 
-def main(): 
+def main():
   # Get training and test set
-  training_music, test_music = get_music_data()
+  training_music, test_music = get_music_data(200)
 
   # Parse training music into notes
   music21_notes_train = get_music21_notes(training_music)
   parsed_notes_train = get_parsed_notes(music21_notes_train)
 
-  # Parse test music into notes 
+  # Parse test music into notes
   music21_notes_test = get_music21_notes(test_music)
   parsed_notes_test = get_parsed_notes(music21_notes_test)
 
   # Create the vocabulary
-  # NOTE: To avoid missing key errors, we add all notes from the 
-  #       testing set also in the vocab. 
+  # NOTE: To avoid missing key errors, we add all notes from the
+  #       testing set also in the vocab.
   vocab = set(note for group in parsed_notes_train for note in group)
   for group in parsed_notes_test:
     for note in group:
@@ -235,11 +239,11 @@ def main():
 
   # Create the dataset with notes X and labels Y
   X, Y = make_dataset(parsed_notes_train, note_to_idx)
-  
+
   # Traing the classifier
   clf = train_rf(X, Y)
 
-  # Get the training accuracy 
+  # Get the training accuracy
   print("Training Accuracy")
   print("-----------------")
   training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
@@ -247,7 +251,7 @@ def main():
 
   print()
 
-  # Get the test accuracy 
+  # Get the test accuracy
   print("Test Accuracy")
   print("-----------------")
   test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
@@ -262,6 +266,6 @@ def main():
 
   # Open the song in MuseScore
   play_music(predicted)
-    
+
 if __name__ == "__main__":
   main()
