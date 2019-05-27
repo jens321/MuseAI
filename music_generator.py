@@ -2,6 +2,7 @@ from sklearn.ensemble import RandomForestClassifier
 from music21 import *
 import random
 import os
+from tqdm import tqdm
 
 def get_music_data():
   '''
@@ -9,6 +10,7 @@ def get_music_data():
   '''
   bach_songs = corpus.getComposer('bach')
   song_list = []
+  tqdm_iter = tqdm(total = 200)
   trained_songs = 1
   idx = 0
   while trained_songs < 200:
@@ -17,7 +19,6 @@ def get_music_data():
       song = 'bach/' + '.'.join(str(bach_songs[idx]).split('/')[-1].split('.')[:-1])
     else:
       song = 'bach/' + '.'.join(str(bach_songs[idx]).split('\\')[-1].split('.')[:-1])
-    print("song: {}".format(song))
     # Check if Soprano voice exits
     parsed_song = corpus.parse(song)
     
@@ -26,6 +27,7 @@ def get_music_data():
       part = parsed_song.parts.stream()['soprano']
       song_list.append(song)
       trained_songs += 1
+      tqdm_iter.update(1)
     except:
       pass
     idx += 1
