@@ -10,7 +10,7 @@ def get_music_data():
   '''
   bach_songs = corpus.getComposer('bach')
   song_list = []
-  tqdm_iter = tqdm(total = 200)
+  tqdm_iter = tqdm(total = 200, desc="Getting Music Data...", initial=1)
   trained_songs = 1
   idx = 0
   while trained_songs < 200:
@@ -31,6 +31,7 @@ def get_music_data():
     except:
       pass
     idx += 1
+  tqdm_iter.close()
 
   # Randomize the songs before making training and test split 
   random.shuffle(song_list)
@@ -92,7 +93,7 @@ class MusicGenerator():
     '''
 
     notes_to_parse = []
-    for song in songs:
+    for song in tqdm(songs, desc="Parsing Songs..."):
       parsed_song = corpus.parse(song)
       # We probably want to make this more flexible so
       # it can take in the part we want?
@@ -111,7 +112,7 @@ class MusicGenerator():
     notes: list of Note and Chord representations that are hashable
     '''
     notes = []
-    for note_group in music21_notes:
+    for note_group in tqdm(music21_notes, desc="Extracting Notes and Chords..."):
       notes.append([])
       for sound in note_group:
         if isinstance(sound, note.Note):
@@ -135,7 +136,7 @@ class MusicGenerator():
     '''
     X = []
     Y = []
-    for song in parsed_notes:
+    for song in tqdm(parsed_notes, desc="Constructing Dataset..."):
       int_notes = list(map(lambda t: self.note_to_idx[t], song))
       for i in range(len(int_notes) - sequence_length):
         X.append(int_notes[i:i + sequence_length])
