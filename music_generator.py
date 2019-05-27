@@ -74,7 +74,7 @@ class MusicGenerator():
 
     # Pick a random song from the test set which we
     # want to listen to
-    show_song = self.test_music[random.randint(0, len(self.test_music))]
+    show_song = self.test_music[random.randint(0, len(self.test_music)-1)]
 
     # Predicted on the randomly picked song
     predicted = self.get_predictions([show_song], clf)
