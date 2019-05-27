@@ -80,7 +80,7 @@ def visualize_input_output():
     Get the input (test) music and graph the specified voice and number of notes
     Get the output (predicted) music and graph it
     '''
-    start = 10;
+    start = 10
     training_music = ['bach/bwv66.6',
                         'bach/bwv1.6',
                         'bwv438',
@@ -121,6 +121,7 @@ def plot(midi, graph_title = "Graph", graph_type = ''):
     '''
     Generic function to plot the midi files
     '''
+    print('begin plot function')
     final_graph_title = graph_title + graph_type
     if graph_type == HISTOGRAM:
         midi.plot(HISTOGRAM, 'pitch', title = final_graph_title)
@@ -128,14 +129,15 @@ def plot(midi, graph_title = "Graph", graph_type = ''):
         midi.plot(HORIZONTAL_BAR, title = final_graph_title)       # TODO: Does not work , idk why
     else:
         midi.plot(title = final_graph_title)
+    print('end plot function')
 
 def sample_plot():
     chopin = corpus.parse('chopin/mazurka')
     chopin.plot(HISTOGRAM, 'pitch')
 
 def main():
-    plot_accuracy()
-    #visualize_input_output()
+    # plot_accuracy()
+    visualize_input_output()
 
 
 if __name__ == '__main__':

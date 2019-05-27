@@ -105,6 +105,20 @@ def train_rf(X, Y, estimators=100):
 
   return clf
 
+def get_baseline_prediction(test_music, vocab, note_to_idx, start_length=10):
+  '''
+  TODO
+  '''
+  notes = get_parsed_notes(get_music21_notes(test_music))[0]
+  predicted = notes[0: start_length]
+  vocab = list(vocab)
+
+  for i in range(len(notes) - start_length):
+    random_note = vocab[random.randint(0, len(vocab)-1)]
+    predicted.append(random_note)
+
+  return predicted 
+
 def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
   '''
   Starts with the first 'start_length' notes of the test_music
@@ -233,6 +247,8 @@ def main():
     for note in group:
       vocab.add(note)
 
+  print('vocab', vocab)
+
   # Create note to int and int to note mappings
   note_to_idx = {note: idx for idx, note in enumerate(vocab)}
   idx_to_note = {idx: note for note, idx in note_to_idx.items()}
@@ -243,19 +259,19 @@ def main():
   # Traing the classifier
   clf = train_rf(X, Y)
 
-  # Get the training accuracy
-  print("Training Accuracy")
-  print("-----------------")
-  training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
-  print(training_accuracy)
+  # # Get the training accuracy
+  # print("Training Accuracy")
+  # print("-----------------")
+  # training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
+  # print(training_accuracy)
 
-  print()
+  # print()
 
-  # Get the test accuracy
-  print("Test Accuracy")
-  print("-----------------")
-  test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
-  print(test_accuracy)
+  # # Get the test accuracy
+  # print("Test Accuracy")
+  # print("-----------------")
+  # test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
+  # print(test_accuracy)
 
   # Pick a random song from the test set which we
   # want to listen to
@@ -263,9 +279,15 @@ def main():
 
   # Predicted on the randomly picked song
   predicted = get_predictions([show_song], clf, note_to_idx, idx_to_note)
+  print(predicted)
+
+  # Get baseline prediction
+  baseline_predicted = get_baseline_prediction([show_song], vocab, note_to_idx)
+  print(baseline_predicted)
 
   # Open the song in MuseScore
   play_music(predicted)
+  play_music(baseline_predicted)
 
 if __name__ == "__main__":
   main()
