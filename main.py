@@ -3,6 +3,7 @@ from music21 import *
 import statistics as stats
 import random
 from music_generator import MusicGenerator
+import os
 # Data preprocessing was heavily inspired by:
 # https://github.com/Skuldur/Classical-Piano-Composer/blob/master/lstm.py
 
@@ -183,9 +184,13 @@ def get_music_data(datasetNum):
   trained_songs = 1
   idx = 0
   while trained_songs < datasetNum:
-    # uncomment below if windows and comment the line below with the forward slashes 
-    #song = 'bach\\' + '.'.join(str(bach_songs[idx]).split('\\')[-1].split('.')[:-1])
-    song = 'bach/' + '.'.join(str(bach_songs[idx]).split('/')[-1].split('.')[:-1])
+    
+    song = None
+    if(os.name == 'posix'):
+      song = 'bach/' + '.'.join(str(bach_songs[idx]).split('/')[-1].split('.')[:-1])
+    else:
+      song = 'bach/' + '.'.join(str(bach_songs[idx]).split('\\')[-1].split('.')[:-1])
+    
     # Check if Soprano voice exits
     parsed_song = corpus.parse(song)
 
