@@ -28,6 +28,7 @@ def plot_accuracy():
         # Parse training music into notes
         music21_notes_train = get_music21_notes(training_music)
         parsed_notes_train = get_parsed_notes(music21_notes_train)
+      
 
         # Parse test music into notes
         music21_notes_test = get_music21_notes(test_music)
@@ -72,6 +73,7 @@ def plot_accuracy():
     plt.plot(numTrain, accuracy_test, label = 'Test Accuracy', linewidth=2)
     plt.ylabel('Accuracy (%)')
     plt.xlabel('Number of Songs')
+    plt.legend()
     plt.show()
 
 def visualize_input_output():
@@ -136,8 +138,8 @@ def sample_plot():
     chopin.plot(HISTOGRAM, 'pitch')
 
 def main():
-    # plot_accuracy()
-    visualize_input_output()
+    plot_accuracy()
+    #visualize_input_output()
 
 
 if __name__ == '__main__':
