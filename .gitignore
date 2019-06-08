@@ -9,3 +9,4 @@ __pycache__/
 !README.md
 !data_analysis.py
 !main.py
+!rnn.py
