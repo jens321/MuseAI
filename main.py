@@ -119,6 +119,18 @@ def get_baseline_prediction(test_music, vocab, note_to_idx, start_length=10):
     predicted.append(random_note)
 
   return predicted 
+"""
+def get_base_range_prediction(test_music, vocab, note_to_idx, start_length=10):
+  '''
+  Function to return a baseline prediction given a range of notes
+  acquired from the training set
+  '''
+  notes = get_parsed_notes(get_music21_nootes(test_music))[0]
+  predicted = notes[0: start_length]
+  vocab = list(vocab)
+
+  for i in range()
+"""
 
 def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
   '''
@@ -252,7 +264,7 @@ def main():
     for note in group:
       vocab.add(note)
 
-  print('vocab', vocab)
+  #print('vocab', vocab)
 
   # Create note to int and int to note mappings
   note_to_idx = {note: idx for idx, note in enumerate(vocab)}
@@ -260,6 +272,7 @@ def main():
 
   # Create the dataset with notes X and labels Y
   X, Y = make_dataset(parsed_notes_train, note_to_idx)
+  #print("Test notes: {}".format(parsed_notes_test))
 
   # Traing the classifier
   clf = train_rf(X, Y)
@@ -284,11 +297,14 @@ def main():
 
   # Predicted on the randomly picked song
   predicted = get_predictions([show_song], clf, note_to_idx, idx_to_note)
-  print(predicted)
+
+  # set the vocab for the baseline based on the first 10 notes of the test set
+  notes = get_parsed_notes(get_music21_notes(test_music))[0]
+  baseline_vocab = set(notes[0:10])
 
   # Get baseline prediction
-  baseline_predicted = get_baseline_prediction([show_song], vocab, note_to_idx)
-  print(baseline_predicted)
+  baseline_predicted = get_baseline_prediction([show_song], baseline_vocab, note_to_idx)
+  # print(baseline_predicted)
 
   # Open the song in MuseScore
   play_music(predicted)
@@ -296,3 +312,4 @@ def main():
 
 if __name__ == "__main__":
   main()
+ 
