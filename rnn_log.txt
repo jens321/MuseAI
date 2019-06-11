@@ -1,0 +1,71 @@
+Experiment #1
+- iterations: 100000
+- learning_rate: 0.005
+- song_count: 200
+- gradient clip: 20
+
+=> Training Accuracy: 0.1664641167662031
+=> Testing Accuracy: 0.12994349160714486
+
+Experiment #2
+- iterations: 100000
+- learning_rate: 0.005
+- song_count: 10
+- gradient clip: 20
+
+=> Training Accuracy: 1.0
+=> Testing Accuracy: 0.15
+
+Experiment #3 
+- iterations: 100000
+- learning_rate: 0.005
+- song_count: 50
+- gradient clip: 20
+
+=> Training Accuracy: 0.4997917203077332
+=> Testing Accuracy: 0.15953767511634562
+
+Experiment #4
+- iterations: 100000
+- learning_rate: 0.005
+- song_count: 100
+- gradient clip: 20
+
+=> Training Accuracy: 0.2536602353718003
+=> Testing Accuracy: 0.10497460813921643
+
+Experiment #5
+- iterations: 100000
+- learning_rate: 0.005
+- song_count: 150
+- gradient clip: 20
+
+=> Training Accuracy: 0.20292592378880434
+=> Testing Accuracy: 0.1353095618965488
+
+Experiment #6
+- iterations: 100000
+- learning_rate: 0.005
+- song_count: 200
+- gradient clip: 20
+
+=> Training Accuracy: 0.16907235950881094
+=> Testing Accuracy: 0.11756790541291759
+
+Experiment #7
+- iterations: 100000
+- learning_rate: 0.0005
+- song_count: 200
+- gradient clip: 100
+
+=> Training Accuracy: 0.17831383308373117
+=> Testing Accuracy: 0.13800684136721503
+
+Experiment #8
+- iterations: 100000
+- learning_rate: 0.001
+- song_count: 200
+- gradient clip: 100
+
+=> Training Accuracy: 0.15825757764210582
+=> Testing Accuracy: 0.12176126209586584

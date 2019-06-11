@@ -13,3 +13,4 @@ __pycache__/
 !util.py
 !rnn_weights
 !plots
+!rnn_log.txt
