@@ -10,3 +10,6 @@ __pycache__/
 !data_analysis.py
 !main.py
 !rnn.py
+!util.py
+!rnn_weights
+!plots
