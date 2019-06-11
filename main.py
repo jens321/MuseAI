@@ -132,25 +132,57 @@ def get_base_range_prediction(test_music, vocab, note_to_idx, start_length=10):
   for i in range()
 """
 
-def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
+def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10, num_chances=1):
   '''
   Starts with the first 'start_length' notes of the test_music
   and predicts from then on. Every predicted note/chord is appended
   and used for the next prediction (sliding window).
 
+  num_chances: the number of predicted classes that will go into
+              the accuracy calculation
   Returns
   -------
   predicted: the newly predicted song (including start sequence)
+            this array will return num_chances possible notes for every prediction
   '''
   notes = get_parsed_notes(get_music21_notes(test_music))[0]
   int_notes = list(map(lambda t: note_to_idx[t], notes))
   predicted = int_notes[0: start_length]
 
+  
+  # previous impl, with only one hit/miss
   for i in range(len(int_notes) - start_length):
     prediction = clf.predict([predicted[i: i + start_length]])[0]
     predicted.append(prediction)
 
   return list(map(lambda t: idx_to_note[t], predicted))
+
+"""
+def get_predictions_accuracy(test_music, clf, note_to_idx, idx_to_note, start_length=10, num_chances=1):
+  '''
+  Starts with the first 'start_length' notes of the test_music
+  and predicts from then on. Every predicted note/chord is appended
+  and used for the next prediction (sliding window).
+
+  num_chances: the number of predicted classes that will go into
+              the accuracy calculation
+  Returns
+  -------
+  predicted: the newly predicted song (including start sequence)
+            this array will return num_chances possible notes for every prediction
+  '''
+  notes = get_parsed_notes(get_music21_notes(test_music))[0]
+  int_notes = list(map(lambda t: note_to_idx[t], notes))
+  predicted = int_notes[0: start_length]
+
+  
+  # previous impl, with only one hit/miss
+  for i in range(len(int_notes) - start_length):
+    prediction = clf.predict([predicted[i: i + start_length]])[0]
+    predicted.append(prediction)
+
+  return list(map(lambda t: idx_to_note[t], predicted))
+"""
 
 def play_music(predicted):
   '''
@@ -221,7 +253,7 @@ def get_music_data(datasetNum):
   index_split = int(datasetNum * .8)
   return (song_list[:index_split], song_list[index_split:])
 
-def get_accuracy(music, clf, note_to_idx, idx_to_note):
+def get_accuracy(music, clf, note_to_idx, idx_to_note, num_chances=1):
   '''
   Calculate training/testing accuracy based on "right or wrong" evaluation
   criterion.
@@ -240,6 +272,7 @@ def get_accuracy(music, clf, note_to_idx, idx_to_note):
     for note1, note2 in zip(predicted[10:], original[10:]):
       if note1 == note2:
         count += 1
+      
     accuracies.append(count/len(original[10:]))
 
   return stats.mean(accuracies)
@@ -277,23 +310,23 @@ def main():
   # Traing the classifier
   clf = train_rf(X, Y)
 
-  # # Get the training accuracy
-  # print("Training Accuracy")
-  # print("-----------------")
-  # training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
-  # print(training_accuracy)
+  # Get the training accuracy
+  print("Training Accuracy")
+  print("-----------------")
+  training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
+  print(training_accuracy)
 
   # print()
 
-  # # Get the test accuracy
-  # print("Test Accuracy")
-  # print("-----------------")
-  # test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
-  # print(test_accuracy)
+  # Get the test accuracy
+  print("Test Accuracy")
+  print("-----------------")
+  test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
+  print(test_accuracy)
 
   # Pick a random song from the test set which we
   # want to listen to
-  show_song = test_music[random.randint(0, len(test_music))]
+  show_song = test_music[random.randint(0, len(test_music)-1)]
 
   # Predicted on the randomly picked song
   predicted = get_predictions([show_song], clf, note_to_idx, idx_to_note)
@@ -307,8 +340,8 @@ def main():
   # print(baseline_predicted)
 
   # Open the song in MuseScore
-  play_music(predicted)
-  play_music(baseline_predicted)
+  # play_music(predicted)
+  # play_music(baseline_predicted)
 
 if __name__ == "__main__":
   main()
