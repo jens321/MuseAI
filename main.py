@@ -157,8 +157,8 @@ def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10, 
 
   return list(map(lambda t: idx_to_note[t], predicted))
 
-"""
-def get_predictions_accuracy(test_music, clf, note_to_idx, idx_to_note, start_length=10, num_chances=1):
+
+def get_predictions_accuracy(music, clf, note_to_idx, idx_to_note, start_length=10, num_chances=1):
   '''
   Starts with the first 'start_length' notes of the test_music
   and predicts from then on. Every predicted note/chord is appended
@@ -171,18 +171,48 @@ def get_predictions_accuracy(test_music, clf, note_to_idx, idx_to_note, start_le
   predicted: the newly predicted song (including start sequence)
             this array will return num_chances possible notes for every prediction
   '''
-  notes = get_parsed_notes(get_music21_notes(test_music))[0]
-  int_notes = list(map(lambda t: note_to_idx[t], notes))
-  predicted = int_notes[0: start_length]
+
+  accuracies = []
+  for song in music:
+    # Get original
+    original = get_parsed_notes(get_music21_notes([song]))[0]
+    # Get predicted
+    # predicted = get_predictions([song], clf, note_to_idx, idx_to_note)
+
+    int_notes = list(map(lambda t: note_to_idx[t], original))
+    predicted = int_notes[0: start_length]
+
+    
+    count = 0
+    # previous impl, with only one hit/miss
+    for i in range(len(int_notes) - start_length):
+      prediction = clf.predict([predicted[i: i + start_length]])[0]
+      mult_prediction = clf.predict_proba([predicted[i: i + start_length]])[0]
+
+      temp_list = []
+      # associate key to each element of the prediction, then sort
+      for key, elem in enumerate(mult_prediction):
+        temp_list.append((key, elem))
+      temp_list.sort(key = lambda x: x[1], reverse=True)
+     # print("temp_list: {}".format(temp_list))
+    
+      for j in range(num_chances):
+        if temp_list[j][0] == int_notes[start_length+i]:
+          count += 1
+          break
+      predicted.append(prediction)
+
+  # return list(map(lambda t: idx_to_note[t], predicted))
+      
+    accuracies.append(count/len(original[10:]))
+
+  return stats.mean(accuracies)
+
 
   
-  # previous impl, with only one hit/miss
-  for i in range(len(int_notes) - start_length):
-    prediction = clf.predict([predicted[i: i + start_length]])[0]
-    predicted.append(prediction)
 
-  return list(map(lambda t: idx_to_note[t], predicted))
-"""
+  
+
 
 def play_music(predicted):
   '''
@@ -313,7 +343,7 @@ def main():
   # Get the training accuracy
   print("Training Accuracy")
   print("-----------------")
-  training_accuracy = get_accuracy(training_music, clf, note_to_idx, idx_to_note)
+  training_accuracy = get_predictions_accuracy(training_music, clf, note_to_idx, idx_to_note, num_chances=10)
   print(training_accuracy)
 
   # print()
@@ -321,7 +351,7 @@ def main():
   # Get the test accuracy
   print("Test Accuracy")
   print("-----------------")
-  test_accuracy = get_accuracy(test_music, clf, note_to_idx, idx_to_note)
+  test_accuracy = get_predictions_accuracy(test_music, clf, note_to_idx, idx_to_note, num_chances=10)
   print(test_accuracy)
 
   # Pick a random song from the test set which we
