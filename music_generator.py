@@ -1,4 +1,6 @@
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn import svm
 from music21 import *
 import random
 import os
@@ -6,7 +8,7 @@ from tqdm import tqdm
 
 def get_music_data():
   '''
-  Load the Bach corpus and split the data into training and test. 
+  Load the Bach corpus and split the data into training and test.
   '''
   bach_songs = corpus.getComposer('bach')
   song_list = []
@@ -21,7 +23,7 @@ def get_music_data():
       song = 'bach/' + '.'.join(str(bach_songs[idx]).split('\\')[-1].split('.')[:-1])
     # Check if Soprano voice exits
     parsed_song = corpus.parse(song)
-    
+
     # Hack to test if the song has a soprano voice
     try:
       part = parsed_song.parts.stream()['soprano']
@@ -33,7 +35,7 @@ def get_music_data():
     idx += 1
   tqdm_iter.close()
 
-  # Randomize the songs before making training and test split 
+  # Randomize the songs before making training and test split
   random.shuffle(song_list)
   return (song_list[:160], song_list[160:])
 
@@ -50,13 +52,13 @@ class MusicGenerator():
     music21_notes_train = self.get_music21_notes(self.training_music)
     parsed_notes_train = self.get_parsed_notes(music21_notes_train)
 
-    # Parse test music into notes 
+    # Parse test music into notes
     music21_notes_test = self.get_music21_notes(self.test_music)
     parsed_notes_test = self.get_parsed_notes(music21_notes_test)
 
     # Create the vocabulary
-    # NOTE: To avoid missing key errors, we add all notes from the 
-    #       testing set also in the vocab. 
+    # NOTE: To avoid missing key errors, we add all notes from the
+    #       testing set also in the vocab.
     self.vocab = set(note for group in parsed_notes_train for note in group)
     for group in parsed_notes_test:
       for note in group:
@@ -68,10 +70,12 @@ class MusicGenerator():
 
     # Create the dataset with notes X and labels Y
     X, Y = self.make_dataset(parsed_notes_train)
-    
-    # Traing the classifier
-    clf = self.train_rf(X, Y)
 
+    # Traing the classifier
+    #clf = self.train_rf(X, Y)
+    #clf = self.train_bag(X,Y)
+    clf = self.train_svc(X,Y)
+    print("trained")
     # Pick a random song from the test set which we
     # want to listen to
     show_song = self.test_music[random.randint(0, len(self.test_music)-1)]
@@ -156,6 +160,46 @@ class MusicGenerator():
 
     return clf
 
+  # def train_bag(self, X, Y, estimators=100):
+  #   '''
+  #   Train a Bagging classifier on the dataset
+  #
+  #   Returns
+  #   -------
+  #   clf: the trained Bagging Classifiers
+  #   '''
+  #   clf = BaggingClassifier(n_estimators=estimators)
+  #   clf.fit(X, Y)
+  #
+  #   return clf
+
+  def train_svc(self, X, Y, gamma=.001):#.001, C = 100.):
+    '''
+    Train a SV classifier on the dataset
+
+    Returns
+    -------
+    clf: the trained SV Classifiers
+    '''
+    clf = svm.SVC(C = 100., probability = True, gamma = gamma)
+    clf.fit(X, Y)
+
+    return clf
+
+  # def train_linearsvc(self, X, Y, gamma=.001):#.001, C = 100.):
+  #   '''
+  #   Train a SV classifier on the dataset
+  #
+  #   Returns
+  #   -------
+  #   clf: the trained SV Classifiers
+  #   '''
+  #   clf = svm.LinearSVC(gamma)
+  #   clf.fit(X, Y)
+  #
+  #   return clf
+
+
   def get_predictions(self, test_music, clf, start_length=10):
     '''
     Starts with the first 'start_length' notes of the test_music
@@ -212,5 +256,5 @@ class MusicGenerator():
       midi_stream.show()
     except:
       pass
-    # midi_stream.write('midi', fp='test_output.mid')
+    midi_stream.write('midi', fp='test_output.mid')
     return midi_stream

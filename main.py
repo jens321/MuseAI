@@ -1,4 +1,6 @@
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn import svm
 from music21 import *
 import statistics as stats
 import random
@@ -106,6 +108,33 @@ def train_rf(X, Y, estimators=100):
 
   return clf
 
+  def train_bag(X, Y, estimators=100):
+    '''
+    Train a Random Forest classifier on the dataset
+
+    Returns
+    -------
+    clf: the trained Random Forest classifier
+    '''
+    clf = BaggingClassifier(n_estimators=estimators)
+    clf.fit(X, Y)
+
+    return clf
+
+
+def train_svc(X, Y, gamma=.001):#.001, C = 100.):
+    '''
+    Train a SV classifier on the dataset
+
+    Returns
+    -------
+    clf: the trained SV Classifiers
+    '''
+    clf = svm.SVC(C = 100., probability = True, gamma = gamma)
+    clf.fit(X, Y)
+
+    return clf
+
 def get_baseline_prediction(test_music, vocab, note_to_idx, start_length=10):
   '''
   TODO
@@ -118,7 +147,7 @@ def get_baseline_prediction(test_music, vocab, note_to_idx, start_length=10):
     random_note = vocab[random.randint(0, len(vocab)-1)]
     predicted.append(random_note)
 
-  return predicted 
+  return predicted
 
 def get_predictions(test_music, clf, note_to_idx, idx_to_note, start_length=10):
   '''
@@ -173,6 +202,7 @@ def play_music(predicted):
       offset += 0.5
 
   midi_stream = stream.Stream(output_notes)
+  midi_stream.write('midi', fp='test_output.mid')
   midi_stream.show()
 
 def get_music_data(datasetNum):
@@ -184,13 +214,13 @@ def get_music_data(datasetNum):
   trained_songs = 1
   idx = 0
   while trained_songs < datasetNum:
-    
+
     song = None
     if(os.name == 'posix'):
       song = 'bach/' + '.'.join(str(bach_songs[idx]).split('/')[-1].split('.')[:-1])
     else:
       song = 'bach/' + '.'.join(str(bach_songs[idx]).split('\\')[-1].split('.')[:-1])
-    
+
     # Check if Soprano voice exits
     parsed_song = corpus.parse(song)
 
@@ -262,7 +292,8 @@ def main():
   X, Y = make_dataset(parsed_notes_train, note_to_idx)
 
   # Traing the classifier
-  clf = train_rf(X, Y)
+  #clf = train_rf(X, Y)
+  clf = train_svc(X,Y)
 
   # # Get the training accuracy
   # print("Training Accuracy")

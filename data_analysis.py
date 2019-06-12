@@ -17,7 +17,7 @@ COLOR_GRID = 'colorgrid'
 HORIZONTAL_BAR = 'horizontal_bar'
 
 def plot_accuracy():
-    numTrain = [10, 50, 100, 200, 300]
+    numTrain = [200]#10, 50, 100, 200, 300]
 
     accuracy_train = []
     accuracy_test = []
@@ -28,7 +28,7 @@ def plot_accuracy():
         # Parse training music into notes
         music21_notes_train = get_music21_notes(training_music)
         parsed_notes_train = get_parsed_notes(music21_notes_train)
-      
+
 
         # Parse test music into notes
         music21_notes_test = get_music21_notes(test_music)
@@ -50,7 +50,7 @@ def plot_accuracy():
         X, Y = make_dataset(parsed_notes_train, note_to_idx)
 
         # Traing the classifier
-        clf = train_rf(X, Y)
+        clf = train_svc(X, Y)
 
         # Get the training accuracy
         print("Training Accuracy")
