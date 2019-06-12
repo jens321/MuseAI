@@ -9,4 +9,5 @@ __pycache__/
 !README.md
 !data_analysis.py
 !main.py
-!music_examples/*.mscz
+!music_examples/
+!music_examples/* 
