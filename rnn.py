@@ -10,9 +10,10 @@ import torch.nn as nn
 from util import get_music_data, get_music21_notes, get_parsed_notes, play_music
 
 N_HIDDEN = 128
-WEIGHT_PATH = "./rnn_weights/weights.pth"
-MODEL_PATH = "./rnn_weights/model.pth"
+WEIGHT_PATH = "./rnn_weights/model_iter100000_d200.pth"
+# MODEL_PATH = "./rnn_weights/model.pth"
 
+# Set random seeds so that results stay consistent 
 random.seed(1)
 torch.manual_seed(1)
 
@@ -48,8 +49,12 @@ def convert_one_hot_to_note(one_hot: list):
   return one_hot.index(1)
 
 def convert_song_to_one_hot(song: [str], num_classes: int, note_to_idx: dict):
-  """
-  TODO
+  """Takes a song as a list of pitches and converts each of them to one-hot 
+  vectors.
+
+  Returns
+  -------
+  one_hot_notes: list of one-hot vectors 
   """
   one_hot_notes = []
   for note in song:
@@ -88,7 +93,10 @@ def make_dataset(parsed_notes, note_to_idx, num_classes):
   return dataset 
 
 def train(rnn, song):
-  """
+  """Train the rnn.
+
+  Notes
+  -----
   Heavily based on https://pytorch.org/tutorials/intermediate/char_rnn_generation_tutorial.html 
   """
   # For every training example, we need to reset the hidden state 
@@ -100,7 +108,7 @@ def train(rnn, song):
 
   # Setting this lower helps avoid the exploding gradient problem
   # Up to 0.005 seems to work
-  learning_rate = 0.001
+  learning_rate = 0.0005
 
   rnn.zero_grad()
 
@@ -114,7 +122,7 @@ def train(rnn, song):
   # Compute gradients
   loss.backward()
 
-  # Played around with these values 
+  # Gradient clipping, played around with these values 
   # 0.25 was default in some PyTorch example, but
   # that seems overly cautious
   # lots of explanation came from here: 
@@ -128,6 +136,9 @@ def train(rnn, song):
   return output, loss.item() / len(song)
 
 def train_rnn(rnn, training_dataset):
+  """Perform Stochastic Gradient Descent (one random song at a time)
+  to train the RNN over the specified number of iterations. 
+  """
   n_iters = 100000
   plot_every = 1000
 
@@ -146,14 +157,23 @@ def train_rnn(rnn, training_dataset):
 
   plt.figure()
   plt.plot(all_losses)
-  plt.savefig('./plots/rnn_training.png')
+  plt.xlabel('Number of Iterations')
+  plt.ylabel('Loss')
+  plt.legend()
+  plt.savefig('./plots/rnn_training_iter100000_d200.png')
 
-def predict(random_song, rnn, num_classes, idx_to_note):
+def predict(random_song, rnn, num_classes, idx_to_note, topk=1):
   """
   Given a random song, get the first note and let the RNN predict the rest.
+
+  Returns 
+  -------
+    predicted_song: list[str], the predicted song by pitches
+    topk_predicted: list[list[int]], the topk predicted pitches at each time step
   """
   with torch.no_grad():
 
+    topk_predicted = []
     predicted_song = []
     hidden = rnn.initHidden()
     output = None 
@@ -165,27 +185,37 @@ def predict(random_song, rnn, num_classes, idx_to_note):
       output, hidden = rnn(cur_note, hidden)
 
     # Append the 10th note and setup for rest of predictions
-    # print("OUTPUT")
-    # print("------")
-    # print(output)
     _, topi = output.topk(1)
-    # print(topi)
+
+    # Get topk predictions
+    _, topi_k = output.topk(topk)
+    topk_predicted.append(topi_k.squeeze(0).tolist())
+
+    # Add first model prediction to the list
     predicted_song.append(idx_to_note[topi.item()])
-    cur_note = torch.FloatTensor([convert_note_to_one_hot(topi.item(), num_classes)])
+
+    # Initialize the current note to the 11th note
+    # cur_note = torch.FloatTensor([convert_note_to_one_hot(topi.item(), num_classes)])
 
     for i in range(10, len(random_song) - 1):
-      output, hidden = rnn(cur_note, hidden)
+      output, hidden = rnn(output, hidden)
 
       _, topi = output.topk(1)
-      # Convert into a note
+
+      # Get topk predictions
+      _, topi_k = output.topk(topk)
+      topk_predicted.append(topi_k.squeeze(0).tolist())
+
+      # Convert index into a note
       note = idx_to_note[topi.item()]
       predicted_song.append(note)
 
-      cur_note = torch.FloatTensor([convert_note_to_one_hot(topi.item(), num_classes)])
+      # cur_note = torch.FloatTensor([convert_note_to_one_hot(topi.item(), num_classes)])
+      # cur_note = torch.FloatTensor([[0 for i in range(num_classes)]])
 
     assert len(predicted_song) == len(random_song), 'Predictions were wrongly made!'
 
-    return predicted_song
+    return predicted_song, topk_predicted
 
 def get_accuracy(rnn, music, num_classes, idx_to_note, note_to_idx):
   """
@@ -200,20 +230,16 @@ def get_accuracy(rnn, music, num_classes, idx_to_note, note_to_idx):
   for song in music:
     # Get predicted 
     one_hot_song = convert_song_to_one_hot(song, num_classes, note_to_idx)
-    predicted = predict(one_hot_song, rnn, num_classes, idx_to_note)
+    predicted = predict(one_hot_song, rnn, num_classes, idx_to_note, topk=10)[1]
 
     count = 0
-    assert len(predicted) == len(song), 'Something went wrong when predicting'
-    for note1, note2 in zip(predicted[10:], song[10:]):
-      if note1 == note2:
+    assert len(predicted) == len(song[10:]), 'Something went wrong when predicting'
+    for note_range, og_note in zip(predicted, song[10:]):
+      if note_to_idx[og_note] in note_range:
         count += 1
     accuracies.append(count/len(song[10:]))
 
   return stats.mean(accuracies)
-
-  # NOTE
-  # For hit@3 etc., just included a set of notes instead of just one
-  # and check if note of the original is in the set
 
 def main(): 
   parser = argparse.ArgumentParser(description='PyTorch RNN model')
@@ -221,7 +247,7 @@ def main():
   parser.add_argument('--predict', help='do RNN inference', action='store_true')
   args = parser.parse_args()
 
-  training_music, test_music = get_music_data(200)
+  training_music, test_music = get_music_data(403)
 
   # Parse training music into notes
   music21_notes_train = get_music21_notes(training_music)
@@ -239,6 +265,13 @@ def main():
     for note in group:
       vocab.add(note)
 
+  # IMPORTANT: We sort the vocab so that it gives a consistent
+  #            across multiple runs of the program 
+  vocab = list(sorted(vocab))
+  print("VOCAB")
+  print("-----")
+  print(len(vocab))
+
   # This includes classes only seen in the test data, 
   # we still want to be able to represent them as one hot vectors
   num_classes = len(vocab)
@@ -250,21 +283,24 @@ def main():
   training_dataset = make_dataset(parsed_notes_train, note_to_idx, num_classes)
   test_dataset = make_dataset(parsed_notes_test, note_to_idx, num_classes)
 
+  rnn = RNN(num_classes, N_HIDDEN, num_classes)
   if args.train:
-    rnn = RNN(num_classes, N_HIDDEN, num_classes)
     train_rnn(rnn, training_dataset)
+
     # Save weights for reloading later 
-    torch.save(rnn, MODEL_PATH)
+    torch.save(rnn.state_dict(), WEIGHT_PATH)
+    
+  elif args.predict:
+    rnn.load_state_dict(torch.load(WEIGHT_PATH))
     rnn.eval()
 
-    print("TRAIN NOTES LEN")
-    print('---------------')
-    print(parsed_notes_train)
     # Get the training accuracy
     print("Training Accuracy")
     print("-----------------")
     training_accuracy = get_accuracy(rnn, parsed_notes_train, num_classes, idx_to_note, note_to_idx)
     print(training_accuracy)
+
+    print()
 
     # Get the test accuracy
     print("Test Accuracy")
@@ -272,46 +308,24 @@ def main():
     test_accuracy = get_accuracy(rnn, parsed_notes_test, num_classes, idx_to_note, note_to_idx)
     print(test_accuracy)
 
-  elif args.predict:
-    rnn = torch.load(MODEL_PATH)
-    # rnn.load_state_dict(torch.load(WEIGHT_PATH))
-    rnn.eval()
-
-    print("TRAIN NOTES LEN")
-    print('---------------')
-    # print(parsed_notes_train)
-    # Get the training accuracy
-    print("Training Accuracy")
-    print("-----------------")
-    training_accuracy = get_accuracy(rnn, parsed_notes_train, num_classes, idx_to_note, note_to_idx)
-    print(training_accuracy)
-
-    # print()
-
-    # # Get the test accuracy
-    # print("Test Accuracy")
-    # print("-----------------")
-    # test_accuracy = get_accuracy(rnn, test_dataset, num_classes, idx_to_note)
-    # print(test_accuracy)
-
-
-    # random_song = training_dataset[random.randint(0, len(training_dataset) - 1)]
-    # predicted = predict(random_song, rnn, num_classes, idx_to_note)
+    # random_song = parsed_notes_test[random.randint(0, len(parsed_notes_test) - 1)]
+    # random_song = convert_song_to_one_hot(random_song, num_classes, note_to_idx)
+    # print("RANDOM SONG")
+    # print("-----------")
+    # print(random_song)
+    # predicted = predict(random_song, rnn, num_classes, idx_to_note)[0]
     # print("PREDICTED NOTES")
     # print("---------------")
     # print(predicted)
 
     # play_music(predicted)
 
-  # Current thought: send one note in, backprop, repeat
-  # Add end of song token, or maybe not? => probably not, but mention that 
-  # this actually simplifies things on our part 
-
-  # For sampling, would we only start with one note?
-  # As time goes, the hidden state will carry more and more
-  # of past notes information
-
 if __name__ == "__main__":
   main()
 
 # played around with different dataset sizes
+# Training: send one note in, backprop, repeat
+# We did not add END token, so we sample same length as the original song 
+# For sampling, we force through the first 10 notes and then start checking
+# As time goes, the hidden state will carry more and more
+# of past notes information

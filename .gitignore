@@ -11,6 +11,9 @@ __pycache__/
 !main.py
 !rnn.py
 !util.py
-!rnn_weights
-!plots
+!rnn_weights/
+!rnn_weights/*
+!plots/
+!plots/*
 !rnn_log.txt
+!rnn2_log.txt
